@@ -1,0 +1,138 @@
+---
+title: "Week4"
+author: "Musrat Jahan"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Load libraries
+```{r, include=FALSE}
+library(tidyr)
+library(tidyverse)
+library(openintro)
+library(dplyr)
+```
+
+## Read csv file
+```{r}
+library (readr)
+
+
+mydata <- read.csv("https://raw.githubusercontent.com/musratjahan1/DATA607/refs/heads/main/Week4_table.csv", quote = "")
+
+head(mydata)
+```
+
+## Rename columns
+```{r}
+colnames(mydata) <- c("Airline","Category", "Los_Angeles", "Phoenix", "San_Diego", "San_Francisco", "Seattle")
+
+mydata
+```
+
+## Long table
+This is tidy format because if I add a new city or new category or new airline I don't need to change the dimensions of data frame. I don't need to add new columns only rows. Each row has features of one single observation not multiple. 
+
+```{r}
+df <- mydata %>% 
+  pivot_longer(Los_Angeles:Seattle, names_to = "city", values_to =   "count") %>% 
+  arrange(Airline, Category)
+df
+```
+
+## Create a table with delayed flights 
+```{r}
+ delays <- df %>%
+  filter(Category == "delayed")
+
+delays
+
+```
+
+## Create a table with on time flights 
+```{r}
+timely <- df %>%
+  filter(Category == "on time")
+
+timely
+
+```
+
+## New combined table with just counts 
+```{r}
+total <- cbind(
+select(delays, count),
+select(timely, count)
+)
+
+colnames(total) <- c("delayed flights", "on time flights ")
+total
+```
+
+
+## Summary statistics delayed flights
+```{r}
+delays %>%
+  summarise(mean_delayed   = mean(count), 
+            median_delayed = median(count), 
+            n         = n())
+```
+
+## Histogram of average number of delayed flights across airlines
+
+Overall, AM WEST has higher number of delayed flights.
+
+```{r}
+delays %>%
+  group_by(Airline) %>%
+  summarise(mean_delayed = mean(count), iqr_delayed = IQR(count), n_flights = n()) %>%
+  ggplot(aes(x = Airline, y = mean_delayed)) + 
+  geom_point()
+  
+    
+```
+
+## Histogram of average number of delayed flights across cities
+San Diego has lowest average number of delayed flights and Phoenix has highest average number of delayed flights.
+```{r}
+delays %>%
+  group_by(city) %>%
+  summarise(mean_delayed = mean(count), n_flights = n()) %>%
+  ggplot(aes(x = city, y = mean_delayed)) + 
+  geom_point()
+
+```
+
+## Histogram of mean of delayed flights across cities and airlines 
+Overall, AM WEST seems to have more delayed flights across all the cities except for Seattle.
+
+```{r}
+ggplot(data = delays, aes(x = city, y = count, color = Airline)) + 
+  geom_point()
+```
+
+## Conclusion
+In conclusion, Alaska Airlines seems to have less delayed flights on average as shown in the above graphs. However, for Seattle, AM West might be the better choice because it has significantly less delayed flights compared to Alaska Airlines.
+
+Seattle and Phoenix, on average, have high amounts of delayed flights. However, when we look at delayed flights separated by airline, we see that they actually have the lowest amount of delayed flights on one of the airlines compared to other cities. There is a big difference between the two airlines for number of delayed flights for Phoenix and Seattle. That is why the combined mean for the two airlines for these two cities are not very accurate. For the other cities, both of the airlines have more similar number of delayed flights.
+
+## RPubs link
+https://rpubs.com/musratj12/1276110
+
+## URL to .Rmd file in github repository 
+
+
+
+
