@@ -1,0 +1,107 @@
+---
+title: "Week5"
+author: "Musrat Jahan"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Load packages
+```{r}
+library(dplyr)
+library(tidyverse)
+library(stringr)
+library(DT)
+library(ggplot2)
+```
+
+
+## Load txt file
+```{r}
+library(readr)
+con <- ("./tournamentinfo.txt")
+tourinfo <- readLines(con)
+head(tourinfo, 10)
+
+```
+
+## Structure data 
+```{r}
+# remove first 4 rows 
+info <- tourinfo[-c(0:4)]
+
+# remove unnecessary spaces
+info <- info[sapply(info, nchar) > 0]
+
+# divide odd / even rows into separate set of lines
+odd <- c(seq(1, length(info), 3))
+odd_a <- info[odd]
+
+even <- c(seq(2, length(info), 3))
+even_a <- info[even]
+```
+
+## Make variables clear 
+```{r}
+# name
+name <- str_extract(odd_a, "\\s+([[:alpha:]- ]+)\\b\\s*\\|")
+name <- gsub(name, pattern = "|", replacement = "", fixed = T)
+# strip the space
+name <- trimws(name)
+
+# state
+state <- str_extract(even_a, "[[:alpha:]]{2}")
+
+# total_points
+total_points <- str_extract(odd_a, "[[:digit:]]+\\.[[:digit:]]")
+total_points <- as.numeric(as.character(total_points))
+
+# pre_rating
+pre_rating <- str_extract(even_a, ".\\: \\s?[[:digit:]]{3,4}")
+pre_rating <- gsub(pre_rating, pattern = "R: ", replacement = "", fixed = T)
+pre_rating <- as.numeric(as.character(pre_rating))
+
+# opponent_number to extract opponents pair number per player
+opponent_number <- str_extract_all(odd_a, "[[:digit:]]{1,2}\\|")
+opponent_number <- str_extract_all(opponent_number, "[[:digit:]]{1,2}")
+opponent_number <- lapply(opponent_number, as.numeric)
+```
+
+## Calculate Average Pre Chess Rating of Opponents and store in a lis
+```{r}
+avg_rating <- list()
+for (i in 1:length(opponent_number)){
+  avg_rating[i] <- round(mean(pre_rating[unlist(opponent_number[i])]),2)
+}
+avg_rating <- lapply(avg_rating, as.numeric)
+avg_rating <- data.frame(unlist(avg_rating))
+```
+
+## Create initial data frame
+```{r}
+df <- cbind.data.frame(name, state, total_points, pre_rating, avg_rating)
+colnames(df) <- c("Name", "State", "Total_points", "Pre_rating", "Avg_pre_chess_rating_of_opponents")
+head(df)
+
+```
+
+##Produce csv file
+```{r}
+write.csv(df, "tournament.csv") 
+```
+
+## RPubs Link
+https://rpubs.com/musratj12/1280196
+
