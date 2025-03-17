@@ -1,0 +1,108 @@
+---
+title: "Week 7"
+author: "Musrat Jahan"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+df <- read.table("https://raw.githubusercontent.com/musratjahan1/DATA607/refs/heads/main/dataweek7.txt", sep=",", header=TRUE)
+head(df)
+```
+
+## JSON
+```{r}
+library(jsonlite)
+
+#convert to json
+json_data <- toJSON(df, pretty=TRUE)
+
+#save json to a file
+write(json_data, "data.json")
+
+#print output
+cat(json_data)
+
+#read json file as a data frame 
+json_data <- fromJSON("data.json")
+print(json_data)
+```
+
+
+## HTML
+```{r}
+library(htmlTable)
+
+#create html table
+html_data <- htmlTable(df)
+
+#save html table to a file
+writeLines(html_data, "data.html")
+
+#print output
+cat(html_data)
+```
+
+## XML
+```{r}
+library(XML)
+
+#convert to xml
+xml_data <- xmlTree()
+xml_data$addTag("root",close=FALSE)
+for(i in 1:nrow(df)) {
+  xml_data$addTag("record", close=FALSE)
+  xml_data$addTag("Category", df$Category[i])
+  xml_data$addTag("IItem.Name", df$Item.Name[i])
+  xml_data$addTag("Item.ID", df$Item.ID[i])
+  xml_data$addTag("Brand", df$Brand[i])
+  xml_data$addTag("Price", df$Price[i])
+  xml_data$addTag("Variation.ID", df$Variation.ID[i])
+  xml_data$addTag("Variation.Details", df$Variation.Details[i])
+  xml_data$closeTag()     #close <record>
+  
+}
+xml_data$closeTag()       #close root
+
+#save xml to file
+saveXML(xml_data, file="data.xml")
+
+#print xml output
+cat(saveXML(xml_data))
+
+#read xml file
+xml_parsed<- xmlParse("data.xml")
+df_from_xml<- xmlToDataFrame(nodes = getNodeSet(xml_parsed, "//record"))
+print(df_from_xml)
+```
+
+
+## Parquet
+```{r}
+library(arrow)
+
+#save dataframe as parquet
+write_parquet(df, "data.parquet")
+
+#read parquet file
+df_parquet<- read_parquet("data.parquet")
+print(df_parquet)
+```
+
+## Pros and Cons
+JSON is best for web based applications and APIs and for loading into JavaScript. However it does not have schema support and namespace support.
+HTML is good for web visualizations and reports and easy sharing. It is simple to edit. However it needs CSS and JavaScript for dynamic content and styling. 
+XML is best for structured data exchange and has schema support and namespace support. However it is more complicated to convert a dataframe to xml. 
+Parquet is best for large datasets because it is very fast and uses low storage. It is good for column aggregate queries so if dataframe has many columns it is better. However for a data frame with many records and not many columns there are better options.
